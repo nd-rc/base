@@ -1,33 +1,9 @@
 import os.path as osp
+
 from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 ROOT = osp.dirname(osp.abspath(__file__))
-
-def get_cuda_arch_flags():
-    """
-    Автоматически определяет флаги архитектуры для RTX 5070 (Blackwell)
-    и других новых карт, если они не заданы явно.
-    """
-    # Если пользователь задал переменную вручную - слушаемся её
-    if os.getenv("TORCH_CUDA_ARCH_LIST"):
-        return []
-    arch_list = []
-    if torch.cuda.is_available():
-        major, minor = torch.cuda.get_device_capability()
-        print(f"Detected GPU architecture: {major}.{minor}")
-        
-        # Если карта новее, чем то, что знает компилятор (например 10.x или 12.x),
-        # используем совместимость с 8.9 + PTX
-        if major >= 9: 
-            print("New GPU detected (Blackwell+). Using 8.9+PTX compatibility mode.")
-            arch_list = ['-gencode=arch=compute_89,code=compute_89']
-        else:
-            arch_list = [f'-gencode=arch=compute_{major}{minor},code=sm_{major}{minor}']
-            
-    return arch_list
-
-arch_flags = get_cuda_arch_flags()
 
 setup(
     name='droid_backends',
@@ -43,7 +19,15 @@ setup(
             ],
             extra_compile_args={
                 'cxx': ['-O3'],
-                'nvcc': ['-O3'] + arch_flags,
+                'nvcc': [
+                    '-O3',
+                    # '-gencode=arch=compute_60,code=sm_60',
+                    # '-gencode=arch=compute_61,code=sm_61',
+                    '-gencode=arch=compute_70,code=sm_70',
+                    '-gencode=arch=compute_75,code=sm_75',
+                    '-gencode=arch=compute_80,code=sm_80',
+                    '-gencode=arch=compute_86,code=sm_86',
+                ],
             },
         ),
     ],
@@ -70,7 +54,15 @@ setup(
             ],
             extra_compile_args={
                 'cxx': ['-O2'],
-                'nvcc': ['-O2'] + arch_flags,
+                'nvcc': [
+                    '-O2',
+                    # '-gencode=arch=compute_60,code=sm_60',
+                    # '-gencode=arch=compute_61,code=sm_61',
+                    '-gencode=arch=compute_70,code=sm_70',
+                    '-gencode=arch=compute_75,code=sm_75',
+                    '-gencode=arch=compute_80,code=sm_80',
+                    '-gencode=arch=compute_86,code=sm_86',
+                ],
             },
         ),
     ],
